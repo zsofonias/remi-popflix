@@ -16,10 +16,11 @@ function StarRating({ maxRating = 5 }: StarRatingProps) {
   function handleOnStarClick(starIndex: number) {
     if (rating === starIndex) return resetRating();
     setRating(starIndex);
+    setHoveredStarIndex(starIndex);
   }
 
   function handleOnStarHover(starIndex: number) {
-    if (rating) return;
+    if (rating && starIndex === 0) return;
     setHoveredStarIndex(starIndex);
   }
 
