@@ -4,15 +4,20 @@ import { WatchedMovie } from '../../interfaces/watched-movie.interface';
 interface MoviesListItmeProps {
   movie: Movie | WatchedMovie;
   isWatched?: boolean;
+  onClick: (id: string) => void;
 }
 
 function isWatchedMovie(movie: Movie | WatchedMovie): movie is WatchedMovie {
-  return (movie as WatchedMovie).runtime !== undefined; // Check for a property unique to WatchedMovie
+  return (movie as WatchedMovie).userRating !== undefined; // Check for a property unique to WatchedMovie
 }
 
-function MoviesListItme({ movie, isWatched = false }: MoviesListItmeProps) {
+function MoviesListItme({
+  movie,
+  onClick,
+  isWatched = false,
+}: MoviesListItmeProps) {
   return (
-    <li>
+    <li onClick={() => onClick(movie.imdbID)}>
       <img src={movie.Poster} alt={`${movie.Title} poster`} />
       <h3>{movie.Title}</h3>
       {!isWatched && (
@@ -36,7 +41,7 @@ function MoviesListItme({ movie, isWatched = false }: MoviesListItmeProps) {
           </p>
           <p>
             <span>⏳</span>
-            <span>{movie.runtime} min</span>
+            <span>{movie.Runtime} min</span>
           </p>
         </div>
       )}
