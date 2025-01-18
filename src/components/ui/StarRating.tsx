@@ -39,7 +39,7 @@ function StarRating({
   }
 
   function handleOnStarHover(starIndex: number) {
-    if (rating && starIndex === 0) return;
+    if (rating && starIndex === 0) return setHoverRating(0);
     setHoverRating(starIndex);
   }
 
@@ -63,7 +63,7 @@ function StarRating({
           <p style={textStyle}>{messages[hoverRating - 1] || ''}</p>
         )}
         {showRating && !messages.length && (
-          <p style={textStyle}>{hoverRating || ''}</p>
+          <p style={textStyle}>{hoverRating || rating || ''}</p>
         )}
       </div>
     </>

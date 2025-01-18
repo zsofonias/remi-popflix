@@ -5,6 +5,7 @@ interface MoviesListItmeProps {
   movie: Movie | WatchedMovie;
   isWatched?: boolean;
   onClick: (id: string) => void;
+  onRemove: (id: string) => void;
 }
 
 function isWatchedMovie(movie: Movie | WatchedMovie): movie is WatchedMovie {
@@ -14,6 +15,7 @@ function isWatchedMovie(movie: Movie | WatchedMovie): movie is WatchedMovie {
 function MoviesListItme({
   movie,
   onClick,
+  onRemove,
   isWatched = false,
 }: MoviesListItmeProps) {
   return (
@@ -41,8 +43,11 @@ function MoviesListItme({
           </p>
           <p>
             <span>⏳</span>
-            <span>{movie.Runtime} min</span>
+            <span>{movie.Runtime}</span>
           </p>
+          <button className="btn-delete" onClick={() => onRemove(movie.imdbID)}>
+            X
+          </button>
         </div>
       )}
     </li>

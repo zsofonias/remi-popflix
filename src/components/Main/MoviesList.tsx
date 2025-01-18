@@ -5,10 +5,12 @@ interface MoviesListProps {
   movies: Movie[];
   isWatched?: boolean;
   onMovieSelect: (id: string) => void;
+  onMovieRemove: (id: string) => void;
 }
 
 function MoviesList({
   movies,
+  onMovieRemove,
   onMovieSelect,
   isWatched = false,
 }: MoviesListProps) {
@@ -20,6 +22,7 @@ function MoviesList({
           isWatched={isWatched}
           movie={movie}
           onClick={onMovieSelect}
+          onRemove={onMovieRemove}
         />
       ))}
     </ul>

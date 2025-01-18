@@ -10,7 +10,7 @@ const average = (arr: number[]) =>
 function MoviesWatchedSummary({ watchedMovies }: MoviesWatchedSummaryProps) {
   const avgImdbRating = average(watchedMovies.map((movie) => movie.imdbRating));
   const avgUserRating = average(watchedMovies.map((movie) => movie.userRating));
-  const avgRuntime = average(watchedMovies.map((movie) => movie.runtime));
+  const avgRuntime = average(watchedMovies.map((movie) => movie.runTime));
 
   return (
     <div className="summary">
@@ -22,7 +22,7 @@ function MoviesWatchedSummary({ watchedMovies }: MoviesWatchedSummaryProps) {
         </p>
         <p>
           <span>⭐️</span>
-          <span>{avgImdbRating}</span>
+          <span>{avgImdbRating.toFixed(1)}</span>
         </p>
         <p>
           <span>🌟</span>

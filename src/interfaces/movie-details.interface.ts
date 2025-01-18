@@ -14,6 +14,7 @@ export interface MovideDetails extends Movie {
   Ratings: Rating[];
   Released: string;
   Writer: string;
-  Runtime: number;
+  Runtime: string;
+  runTime: number;
   imdbRating: number;
 }

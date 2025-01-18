@@ -2,18 +2,41 @@ import { useEffect, useState } from 'react';
 import ErrorMessage from '../ui/ErrorMessage';
 import StarRating from '../ui/StarRating';
 import { MovideDetails } from '../../interfaces/movie-details.interface';
+import { WatchedMovie } from '../../interfaces/watched-movie.interface';
 
 interface MovieDetailsProps {
   movieId: string;
+  watchedMovies: WatchedMovie[];
   onClose: () => void;
+  onAddWatched: (movie: WatchedMovie) => void;
 }
 
 const OMDB_API_KEY = import.meta.env.VITE_OMDB_API_KEY;
 
-function MovieDetails({ movieId, onClose }: MovieDetailsProps) {
+function MovieDetails({
+  movieId,
+  watchedMovies = [],
+  onClose,
+  onAddWatched,
+}: MovieDetailsProps) {
   const [movie, setMovie] = useState<MovideDetails | undefined>();
+  const [userRating, setUserRating] = useState<number | undefined>();
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [errorMsgTwo, setErrorMsgTwo] = useState('');
+
+  const isMovieWatched = watchedMovies
+    .map((watchedMovie) => watchedMovie.imdbID)
+    .includes(movieId);
+
+  const isUserRated = Boolean(userRating && userRating > 0);
+  const watchedMovieRating = watchedMovies.find(
+    (wm) => wm.imdbID === movieId
+  )?.userRating;
+
+  /**
+   * fetch movie details
+   */
   useEffect(
     function () {
       async function fetchMovieDetails() {
@@ -32,7 +55,7 @@ function MovieDetails({ movieId, onClose }: MovieDetailsProps) {
           if (data.Response === 'False') throw new Error('Movie not found');
 
           const movieData: MovideDetails = {
-            imdbID: data.imdbId,
+            imdbID: data.imdbID,
             Title: data.Title,
             Year: data.Year,
             Plot: data.Plot,
@@ -46,6 +69,7 @@ function MovieDetails({ movieId, onClose }: MovieDetailsProps) {
             imdbRating: data.imdbRating,
             Released: data.Released,
             Runtime: data.Runtime,
+            runTime: Number(data.Runtime),
           };
 
           setMovie(movieData);
@@ -61,6 +85,51 @@ function MovieDetails({ movieId, onClose }: MovieDetailsProps) {
     },
     [movieId]
   );
+
+  /**
+   *
+   */
+  useEffect(
+    function () {
+      if (!movie?.Title) return;
+      document.title = `Popflix: ${movie.Title}`;
+
+      return function () {
+        document.title = 'Popflix';
+      };
+    },
+    [movie?.Title]
+  );
+
+  useEffect(
+    function () {
+      function callback(e: KeyboardEvent) {
+        if (e.code === 'Escape') {
+          onClose();
+        }
+      }
+      document.addEventListener('keydown', callback);
+
+      return () => {
+        document.removeEventListener('keydown', callback);
+      };
+    },
+    [onClose]
+  );
+
+  function handleAdd(movie: MovideDetails) {
+    if (!userRating) {
+      setTimeout(() => {
+        setErrorMsgTwo('');
+      }, 3000);
+      return setErrorMsgTwo(
+        'You are required to rate the movie before adding to list'
+      );
+    }
+    const watchedMovie: WatchedMovie = { ...movie, userRating };
+    onAddWatched(watchedMovie);
+    onClose();
+  }
   return (
     <div className="details">
       {isLoading && <p className="loader">Loading...</p>}
@@ -87,13 +156,23 @@ function MovieDetails({ movieId, onClose }: MovieDetailsProps) {
           </header>
 
           <section>
-            <div className="rating">
-              <StarRating
-                size={24}
-                maxRating={10}
-                onRate={() => console.log('Rated')}
-              />
-            </div>
+            {errorMsgTwo && <ErrorMessage message={errorMsgTwo} />}
+            {!isMovieWatched ? (
+              <div className="rating">
+                <StarRating size={24} maxRating={10} onRate={setUserRating} />
+
+                {isUserRated && (
+                  <button className="btn-add" onClick={() => handleAdd(movie)}>
+                    {' '}
+                    Add to list
+                  </button>
+                )}
+              </div>
+            ) : (
+              <p>
+                You have rated this movie {watchedMovieRating} <span>🌟</span>
+              </p>
+            )}
             <p>
               <em>{movie.Plot}</em>
             </p>

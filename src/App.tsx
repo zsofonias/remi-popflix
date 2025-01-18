@@ -9,12 +9,14 @@ import MoviesList from './components/Main/MoviesList';
 import MoviesWatchedSummary from './components/Main/MoviesWatchedSummary';
 import MovieDetails from './components/Main/MovieDetails';
 import ErrorMessage from './components/ui/ErrorMessage';
+import { WatchedMovie } from './interfaces/watched-movie.interface';
+import { Movie } from './interfaces/movie.interface';
 
 const OMDB_API_KEY = import.meta.env.VITE_OMDB_API_KEY;
 
 function App() {
-  const [movies, setMovies] = useState([]);
-  const [watchedMovies, setWatchedMovies] = useState([]);
+  const [movies, setMovies] = useState<Movie[]>([]);
+  const [watchedMovies, setWatchedMovies] = useState<WatchedMovie[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [query, setQuery] = useState('');
@@ -22,12 +24,17 @@ function App() {
 
   useEffect(
     function () {
+      const abortController = new AbortController();
+
       async function fetchMovies() {
         try {
           setErrorMsg('');
           setIsLoading(true);
           const res = await fetch(
-            `http://www.omdbapi.com/?apikey=${OMDB_API_KEY}&s=${query}`
+            `http://www.omdbapi.com/?apikey=${OMDB_API_KEY}&s=${query}`,
+            {
+              signal: abortController.signal,
+            }
           );
 
           if (!res.ok)
@@ -38,11 +45,14 @@ function App() {
           if (data.Response === 'False') throw new Error('Movie not found');
 
           setMovies(data.Search);
-        } catch (err) {
-          if (err instanceof Error) setErrorMsg(err.message);
-          console.log(err);
+        } catch (err: any) {
+          if (err.name !== 'AbortError') {
+            console.log(err);
+            setErrorMsg(err.message);
+          }
         } finally {
           setIsLoading(false);
+          setErrorMsg('');
         }
       }
 
@@ -52,14 +62,15 @@ function App() {
         return;
       }
 
+      // handleCloseMovieDetails();
       fetchMovies();
+
+      return function () {
+        abortController.abort();
+      };
     },
     [query]
   );
-
-  // function handleOnQueryInput(value: string) {
-  //   setQuery(value);
-  // }
 
   function handleOnMovieSelect(id: string) {
     setSelectedMovieId((curr) => (id === curr ? null : id));
@@ -67,6 +78,14 @@ function App() {
 
   function handleCloseMovieDetails() {
     setSelectedMovieId(null);
+  }
+
+  function handleAddWatched(movie: WatchedMovie) {
+    setWatchedMovies((curr) => [...curr, movie]);
+  }
+
+  function handleRemoveWatched(id: string) {
+    setWatchedMovies((curr) => curr.filter((movie) => movie.imdbID !== id));
   }
 
   return (
@@ -80,7 +99,11 @@ function App() {
           {/* {isLoading ? <Loader /> : <MoviesList movies={movies} />} */}
           {isLoading && <Loader />}
           {!isLoading && !errorMsg && (
-            <MoviesList onMovieSelect={handleOnMovieSelect} movies={movies} />
+            <MoviesList
+              onMovieSelect={handleOnMovieSelect}
+              onMovieRemove={() => null}
+              movies={movies}
+            />
           )}
           {errorMsg && <ErrorMessage message={errorMsg} />}
         </MoviesBox>
@@ -88,7 +111,9 @@ function App() {
           {selectedMovieId && (
             <MovieDetails
               movieId={selectedMovieId}
+              watchedMovies={watchedMovies}
               onClose={handleCloseMovieDetails}
+              onAddWatched={handleAddWatched}
             />
           )}
           {!selectedMovieId && (
@@ -97,7 +122,8 @@ function App() {
               <MoviesList
                 movies={watchedMovies}
                 isWatched={true}
-                onMovieSelect={handleOnMovieSelect}
+                onMovieSelect={() => null}
+                onMovieRemove={handleRemoveWatched}
               />
             </>
           )}
