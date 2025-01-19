@@ -10,67 +10,35 @@ import MoviesWatchedSummary from './components/Main/MoviesWatchedSummary';
 import MovieDetails from './components/Main/MovieDetails';
 import ErrorMessage from './components/ui/ErrorMessage';
 import { WatchedMovie } from './interfaces/watched-movie.interface';
-import { Movie } from './interfaces/movie.interface';
-
-const OMDB_API_KEY = import.meta.env.VITE_OMDB_API_KEY;
+import { useMovies } from './components/hooks/useMovies';
+import { useLocalStorageState } from './components/hooks/useLocalStorageState';
 
 function App() {
-  const [movies, setMovies] = useState<Movie[]>([]);
-  const [watchedMovies, setWatchedMovies] = useState<WatchedMovie[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState('');
   const [query, setQuery] = useState('');
   const [selectedMovieId, setSelectedMovieId] = useState<string | null>();
 
-  useEffect(
-    function () {
-      const abortController = new AbortController();
+  const { movies, isLoading, errorMsg } = useMovies({
+    query,
+  });
 
-      async function fetchMovies() {
-        try {
-          setErrorMsg('');
-          setIsLoading(true);
-          const res = await fetch(
-            `http://www.omdbapi.com/?apikey=${OMDB_API_KEY}&s=${query}`,
-            {
-              signal: abortController.signal,
-            }
-          );
+  // // const [watchedMovies, setWatchedMovies] = useState<WatchedMovie[]>([]);
+  // const [watchedMovies, setWatchedMovies] = useState<WatchedMovie[]>(() => {
+  //   const storedValue = localStorage.getItem('watched-movies') || '[]';
+  //   return JSON.parse(storedValue);
+  // });
+  const [watchedMovies, setWatchedMovies] = useLocalStorageState<
+    WatchedMovie[]
+  >({
+    initialState: [],
+    key: 'watched-movies',
+  });
 
-          if (!res.ok)
-            throw new Error('Something went wrong with fetching movies');
-
-          const data = await res.json();
-
-          if (data.Response === 'False') throw new Error('Movie not found');
-
-          setMovies(data.Search);
-        } catch (err: any) {
-          if (err.name !== 'AbortError') {
-            console.log(err);
-            setErrorMsg(err.message);
-          }
-        } finally {
-          setIsLoading(false);
-          setErrorMsg('');
-        }
-      }
-
-      if (query.length < 2) {
-        setMovies([]);
-        setErrorMsg('');
-        return;
-      }
-
-      // handleCloseMovieDetails();
-      fetchMovies();
-
-      return function () {
-        abortController.abort();
-      };
-    },
-    [query]
-  );
+  /**
+   * Save updated watched movies to local storage
+   */
+  useEffect(() => {
+    localStorage.setItem('watched-movies', JSON.stringify(watchedMovies));
+  }, [watchedMovies]);
 
   function handleOnMovieSelect(id: string) {
     setSelectedMovieId((curr) => (id === curr ? null : id));
@@ -82,6 +50,11 @@ function App() {
 
   function handleAddWatched(movie: WatchedMovie) {
     setWatchedMovies((curr) => [...curr, movie]);
+
+    // localStorage.setItem(
+    //   'watched-movies',
+    //   JSON.stringify([...watchedMovies, movie])
+    // );
   }
 
   function handleRemoveWatched(id: string) {

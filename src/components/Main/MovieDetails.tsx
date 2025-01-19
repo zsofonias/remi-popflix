@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import ErrorMessage from '../ui/ErrorMessage';
 import StarRating from '../ui/StarRating';
 import { MovideDetails } from '../../interfaces/movie-details.interface';
 import { WatchedMovie } from '../../interfaces/watched-movie.interface';
+import { useKeydownListener } from '../hooks/useKeydownListener';
 
 interface MovieDetailsProps {
   movieId: string;
@@ -33,6 +34,12 @@ function MovieDetails({
   const watchedMovieRating = watchedMovies.find(
     (wm) => wm.imdbID === movieId
   )?.userRating;
+
+  const countRef = useRef(0);
+
+  useEffect(() => {
+    if (userRating) countRef.current += 1;
+  }, [userRating]);
 
   /**
    * fetch movie details
@@ -69,7 +76,7 @@ function MovieDetails({
             imdbRating: data.imdbRating,
             Released: data.Released,
             Runtime: data.Runtime,
-            runTime: Number(data.Runtime),
+            runTime: Number(data.Runtime.split(' ')[0]),
           };
 
           setMovie(movieData);
@@ -87,7 +94,7 @@ function MovieDetails({
   );
 
   /**
-   *
+   * Change Document Title
    */
   useEffect(
     function () {
@@ -101,21 +108,25 @@ function MovieDetails({
     [movie?.Title]
   );
 
-  useEffect(
-    function () {
-      function callback(e: KeyboardEvent) {
-        if (e.code === 'Escape') {
-          onClose();
-        }
-      }
-      document.addEventListener('keydown', callback);
+  /**
+   * Listen for keydown event
+   */
+  // useEffect(
+  //   function () {
+  //     function callback(e: KeyboardEvent) {
+  //       if (e.code === 'Escape') {
+  //         onClose();
+  //       }
+  //     }
+  //     document.addEventListener('keydown', callback);
 
-      return () => {
-        document.removeEventListener('keydown', callback);
-      };
-    },
-    [onClose]
-  );
+  //     return () => {
+  //       document.removeEventListener('keydown', callback);
+  //     };
+  //   },
+  //   [onClose]
+  // );
+  useKeydownListener({ key: 'Escape', action: onClose });
 
   function handleAdd(movie: MovideDetails) {
     if (!userRating) {
